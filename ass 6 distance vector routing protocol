@@ -1,0 +1,54 @@
+class Router:
+    def __init__(self, router_id, total_routers):
+        self.router_id = router_id
+        self.distance_table = {i: float('inf') for i in range(total_routers)}
+        self.distance_table[router_id] = 0
+        self.neighbors = {}
+
+    def update_neighbor(self, neighbor_id, cost):
+        self.neighbors[neighbor_id] = cost
+
+    def send_distance_vector(self, routers):
+        for neighbor, cost in self.neighbors.items():
+            neighbor_router = routers[neighbor]
+            for destination, distance in self.distance_table.items():
+                if neighbor_router.distance_table[destination] > distance + cost:
+                    neighbor_router.distance_table[destination] = distance + cost
+
+def bellman_ford_routing(routers):
+    is_updated = True
+    while is_updated:
+        is_updated = False
+        for router in routers:
+            original_distance_table = router.distance_table.copy()
+            router.send_distance_vector(routers)
+            if original_distance_table != router.distance_table:
+                is_updated = True
+
+def display_routing_table(routers):
+    for router in routers:
+        print(f"Routing Table for Router {router.router_id}:")
+        for destination, distance in router.distance_table.items():
+            print(f"  Destination: {destination}, Distance: {distance}")
+        print()
+
+def main():
+    total_routers = int(input("Enter the number of routers: "))
+    
+    routers = [Router(i, total_routers) for i in range(total_routers)]
+
+    # Create the graph for the network
+    for i in range(total_routers):
+        num_neighbors = int(input(f"Enter number of neighbors for Router {i}: "))
+        for _ in range(num_neighbors):
+            neighbor_id, cost = map(int, input(f"Enter neighbor and cost for Router {i} (format: neighbor_id cost): ").split())
+            routers[i].update_neighbor(neighbor_id, cost)
+
+    # Run the Bellman-Ford-based Distance Vector Routing algorithm
+    bellman_ford_routing(routers)
+
+    # Display the final routing tables
+    display_routing_table(routers)
+
+if __name__ == "__main__":
+    main()
