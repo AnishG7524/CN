@@ -1,0 +1,95 @@
+practical 8(send hello /file transfer)
+
+program for tcp socket 
+1.send hello to each other
+2.file transfer
+
+tcp server code:-
+
+import socket
+
+BUFFER_SIZE = 1024
+PORT = 8080
+
+def handle_hello(conn):
+    message = conn.recv(BUFFER_SIZE).decode()
+    print(f"Client: {message}")
+    
+    response = "Hello from Server"
+    conn.send(response.encode())
+    print("Response sent to client.")
+
+def handle_file_transfer(conn):
+    with open("received_file.txt", "wb") as file:
+        while True:
+            data = conn.recv(BUFFER_SIZE)
+            if not data:
+                break
+            file.write(data)
+    
+    print("File transfer completed. File saved as 'received_file.txt'.")
+
+def main():
+    server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    server_socket.bind(("", PORT))
+    server_socket.listen(1)
+    print(f"Server is listening on port {PORT}")
+
+    conn, addr = server_socket.accept()
+    print(f"Connection from {addr} has been established.")
+
+    operation = conn.recv(1).decode()
+    if operation == '1':
+        handle_hello(conn)
+    elif operation == '2':
+        handle_file_transfer(conn)
+
+    conn.close()
+    server_socket.close()
+
+if __name__ == "__main__":
+    main()
+----------------------------------------------------------------------------------------------------------------
+tcp client code:-
+
+import socket
+
+BUFFER_SIZE = 1024
+PORT = 8080
+
+def send_hello(client_socket):
+    message = "Hello from Client"
+    client_socket.send(message.encode())
+    print("Message sent to server.")
+    
+    response = client_socket.recv(BUFFER_SIZE).decode()
+    print(f"Server: {response}")
+
+def send_file(client_socket, file_path):
+    with open(file_path, "rb") as file:
+        while True:
+            data = file.read(BUFFER_SIZE)
+            if not data:
+                break
+            client_socket.send(data)
+    
+    print("File transfer completed.")
+
+def main():
+    client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    client_socket.connect(("127.0.0.1", PORT))
+
+    print("Choose operation:\n1. Say Hello\n2. File Transfer")
+    operation = input("Enter your choice: ")
+    client_socket.send(operation.encode())
+
+    if operation == '1':
+        send_hello(client_socket)
+    elif operation == '2':
+        file_path = input("Enter file path: ")
+        send_file(client_socket, file_path)
+
+    client_socket.close()
+
+if __name__ == "__main__":
+    main()
